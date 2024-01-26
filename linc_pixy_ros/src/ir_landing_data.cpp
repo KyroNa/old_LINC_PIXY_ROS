@@ -253,7 +253,7 @@ int main(int argc, char * argv[])
     //Relative Distance from image center to triangle center 
     x_rel = x_c - (PIXY_MAX_X /2);
     y_rel = y_c - (PIXY_MAX_Y /2);
-    printf("Relative distance x: %.3f  y: %.3f\n",x_rel,y_rel);
+    //printf("Relative distance x: %.3f  y: %.3f\n",x_rel,y_rel);
 
     //Find the heading vector 
     if (d1 == d2)
@@ -283,7 +283,7 @@ int main(int argc, char * argv[])
       average_distance_ratio = calculate_average_ratio(d1, real_distance1, d3, real_distance2, d2, real_distance3);
     }
     //theta = atan2(R_y,R_x);
-    printf("Heading Vector (%.3f,%.3f) \n",R_x,R_y);
+    //printf("Heading Vector (%.3f,%.3f) \n",R_x,R_y);
 
     // Convert x_rel and y_rel to meters
     x_rel_meters = pixel_to_meters(x_rel, average_distance_ratio);
@@ -308,9 +308,11 @@ int main(int argc, char * argv[])
     loop_rate.sleep();
 
     // Output results
-    std::cout << "x_rel in meters: " << x_rel_meters << " m" << std::endl;
-    std::cout << "y_rel in meters: " << y_rel_meters << " m" << std::endl;
-    std::cout << "angle_rel_deg: " << angle_rel_deg << " deg" << std::endl;
+    //std::cout << "x_rel in meters: " << x_rel_meters << " m" << std::endl;
+    //std::cout << "y_rel in meters: " << y_rel_meters << " m" << std::endl;
+    //std::cout << "angle_rel_deg: " << angle_rel_deg << " deg" << std::endl;
+    std::cout << "[x_rel, y_rel, angle_rel]" <<std::endl;
+    printf("[%.3f, %.3f, %.3f]\n",x_rel_meters,y_rel_meters,angle_rel_deg); 
 
     i++;
   }
