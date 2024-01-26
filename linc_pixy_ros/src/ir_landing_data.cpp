@@ -274,7 +274,7 @@ int main(int argc, char * argv[])
       // Calculate the average distance ratio
       average_distance_ratio = calculate_average_ratio(d3, real_distance1, d2, real_distance2, d1, real_distance3);
     }
-    else if (d1 == d3 || || abs(d1 - d3) <= 6)
+    else if (d1 == d3 || abs(d1 - d3) <= 6)
     {
       //heading is blocks[1]
       R_x = blocks[1].x - x_c; 
