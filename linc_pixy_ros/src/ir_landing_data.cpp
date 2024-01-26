@@ -53,12 +53,12 @@ inline double distance (Block b1, Block b2)
 }
 
 // Function to calculate the distance ratio
-double calculate_distance_ratio(int pixel_distance, double real_distance) {
+double calculate_distance_ratio(double pixel_distance, double real_distance) {
     return real_distance / pixel_distance;
 }
 
 // Function to calculate the average distance ratio
-double calculate_average_ratio(int d1, double real_distance1, int d2, double real_distance2, int d3, double real_distance3) {
+double calculate_average_ratio(double d1, double real_distance1, double d2, double real_distance2, double d3, double real_distance3) {
     double distance_ratio1 = calculate_distance_ratio(d1, real_distance1);
     double distance_ratio2 = calculate_distance_ratio(d2, real_distance2);
     double distance_ratio3 = calculate_distance_ratio(d3, real_distance3);
@@ -66,7 +66,7 @@ double calculate_average_ratio(int d1, double real_distance1, int d2, double rea
 }
 
 // Function to convert pixel measurement to meters
-double pixel_to_meters(int pixel_value, double distance_ratio) {
+double pixel_to_meters(double pixel_value, double distance_ratio) {
     return pixel_value * distance_ratio;
 }
 
@@ -256,7 +256,8 @@ int main(int argc, char * argv[])
     //printf("Relative distance x: %.3f  y: %.3f\n",x_rel,y_rel);
 
     //Find the heading vector 
-    if (d1 == d2)
+    //We will add a threshould of 6 pixels to calculate the distances
+    if (d1 == d2 || abs(d1 - d2) <= 6)
     {
       //heading is blocks[0]
       R_x = blocks[0].x - x_c; 
@@ -264,7 +265,7 @@ int main(int argc, char * argv[])
       // Calculate the average distance ratio
       average_distance_ratio = calculate_average_ratio(d1, real_distance1, d2, real_distance2, d3, real_distance3);
     }
-    else if (d2 == d3)
+    else if (d2 == d3 || abs(d3 - d2) <= 6)
     {
       //heading is blocks[2]
       R_x = blocks[2].x - x_c; 
@@ -273,7 +274,7 @@ int main(int argc, char * argv[])
       // Calculate the average distance ratio
       average_distance_ratio = calculate_average_ratio(d3, real_distance1, d2, real_distance2, d1, real_distance3);
     }
-    else if (d1 == d3)
+    else if (d1 == d3 || || abs(d1 - d3) <= 6)
     {
       //heading is blocks[1]
       R_x = blocks[1].x - x_c; 
