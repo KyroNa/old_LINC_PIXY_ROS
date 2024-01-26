@@ -229,26 +229,26 @@ int main(int argc, char * argv[])
     
     for(index = 0; index != blocks_copied; ++index) {    
        blocks[index].print(buf);
-       printf("  %s\n", buf);
+       //printf("  %s\n", buf);
     }
 
     //Display coordinates of 3 beacons 
     for (int j = 0; j < BLOCK_BUFFER_SIZE; j++)
-      printf("\nx%d: %d  y%d: %d width: %d height: %d angle: %d",j,blocks[j].x,j,blocks[j].y,blocks[j].width,blocks[j].height,blocks[j].angle);
+      //printf("\nx%d: %d  y%d: %d width: %d height: %d angle: %d",j,blocks[j].x,j,blocks[j].y,blocks[j].width,blocks[j].height,blocks[j].angle);
 
     //Calculate distance between 3 beacons  
     d1 = distance(blocks[0],blocks[1]);
     d2 = distance(blocks[0],blocks[2]);
     d3 = distance(blocks[1],blocks[2]);
     //Display the distance between the 3 beacons 
-    printf("\n\nD1: %.3f", d1);
-    printf("\nD2: %.3f", d2);
-    printf("\nD3: %.3f\n", d3);
+    //printf("\n\nD1: %.3f", d1);
+    //printf("\nD2: %.3f", d2);
+    //printf("\nD3: %.3f\n", d3);
 
     //Find the center point coordinates 
     x_c = (blocks[0].x + blocks[1].x + blocks[2].x)/3;
     y_c = (blocks[0].y + blocks[1].y + blocks[2].y)/3;  
-    printf("\nCenter point x: %.3f  y: %.3f\n",x_c,y_c);
+    //printf("\nCenter point x: %.3f  y: %.3f\n",x_c,y_c);
 
     //Relative Distance from image center to triangle center 
     x_rel = x_c - (PIXY_MAX_X /2);
