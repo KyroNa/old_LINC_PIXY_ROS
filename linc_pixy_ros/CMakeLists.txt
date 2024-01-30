@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   tf
+  roslib
 )
 
 ## System dependencies are found with CMake's conventions
@@ -111,7 +112,7 @@ find_package ( libusb-1.0 REQUIRED )
 catkin_package(
   INCLUDE_DIRS libpixyusb/include libpixyusb/common 
   LIBRARIES pixyusb
-#  CATKIN_DEPENDS roscpp rpspy std_msgs
+# CATKIN_DEPENDS roscpp rpspy std_msgs
 #  DEPENDS system_lib
 )
 
