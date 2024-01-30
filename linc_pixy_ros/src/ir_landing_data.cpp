@@ -13,6 +13,7 @@
 // end license header
 //
 
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -24,7 +25,11 @@
 #include <array>
 #include <algorithm> // for std::min, std::max
 #include "ros/ros.h"
+#include <ros/package.h>
 #include "std_msgs/Float64MultiArray.h"
+#include <vector>
+#include <numeric>  // For std::accumulate
+#include <fstream>
 
 #define BLOCK_BUFFER_SIZE    3
 
@@ -38,6 +43,33 @@ constexpr double real_distance3 = 3.0;
 struct Block blocks[BLOCK_BUFFER_SIZE];
 
 static bool run_flag = true;
+
+//Moving Average Filter 
+class MovingAverage {
+private:
+    std::vector<double> window;
+    int windowSize;
+    int insertIndex;
+    bool windowFull;
+
+public:
+    MovingAverage(int size) : windowSize(size), insertIndex(0), windowFull(false) {
+        window.resize(windowSize, 0.0);
+    }
+
+    void addValue(double value) {
+        window[insertIndex] = value;
+        insertIndex = (insertIndex + 1) % windowSize;
+        if (insertIndex == 0) {
+            windowFull = true;
+        }
+    }
+
+    double getAverage() {
+        double sum = std::accumulate(window.begin(), window.end(), 0.0);
+        return windowFull ? sum / windowSize : sum / insertIndex;
+    }
+};
 
 void handle_SIGINT(int unused)
 {
@@ -117,7 +149,10 @@ int main(int argc, char * argv[])
   double   x_rel_meters = 0;
   double   y_rel_meters = 0;
   double   angle_rel_deg = 0;
-  
+  int      filter_size = 5;
+  MovingAverage filter_x(filter_size); // Moving average with a window size of 5
+  MovingAverage filter_y(filter_size); // Moving average with a window size of 5
+
   // Catch CTRL+C (SIGINT) signals //
   signal(SIGINT, handle_SIGINT);
 
@@ -210,6 +245,22 @@ int main(int argc, char * argv[])
   // Set loop frequency of 10Hz
   ros::Rate loop_rate(10);
 
+  // Construct the file path
+  std::string package_path = ros::package::getPath("linc_pixy_ros");
+  std::string file_path = package_path + "/src/data.csv";
+  // Create an ofstream object for file writing
+  std::ofstream file(file_path.c_str());
+
+  // Check if the file is open
+  if (!file.is_open()) {
+      //std::cerr << "Error: Could not open the file." << std::endl;
+      ROS_ERROR("Unable to open file for writing: %s", file_path.c_str());
+      return 1;
+  }
+
+  // Write data to the file in CSV format
+  file << "x,y,angel\n";  // Header row
+
   while(run_flag && ros::ok())
   {
     // Wait for new blocks to be available //
@@ -234,7 +285,7 @@ int main(int argc, char * argv[])
 
     //Display coordinates of 3 beacons 
     for (int j = 0; j < BLOCK_BUFFER_SIZE; j++)
-      //printf("\nx%d: %d  y%d: %d width: %d height: %d angle: %d",j,blocks[j].x,j,blocks[j].y,blocks[j].width,blocks[j].height,blocks[j].angle);
+      printf("\nx%d: %d  y%d: %d width: %d height: %d angle: %d",j,blocks[j].x,j,blocks[j].y,blocks[j].width,blocks[j].height,blocks[j].angle);
 
     //Calculate distance between 3 beacons  
     d1 = distance(blocks[0],blocks[1]);
@@ -248,11 +299,13 @@ int main(int argc, char * argv[])
     //Find the center point coordinates 
     x_c = (blocks[0].x + blocks[1].x + blocks[2].x)/3;
     y_c = (blocks[0].y + blocks[1].y + blocks[2].y)/3;  
+    filter_x.addValue(x_c);
+    filter_y.addValue(y_c);
     //printf("\nCenter point x: %.3f  y: %.3f\n",x_c,y_c);
 
     //Relative Distance from image center to triangle center 
-    x_rel = x_c - (PIXY_MAX_X /2);
-    y_rel = y_c - (PIXY_MAX_Y /2);
+    x_rel = filter_x.getAverage() - (PIXY_MAX_X /2);
+    y_rel = filter_y.getAverage() - (PIXY_MAX_Y /2);
     //printf("Relative distance x: %.3f  y: %.3f\n",x_rel,y_rel);
 
     //Find the heading vector 
@@ -260,16 +313,16 @@ int main(int argc, char * argv[])
     if (d1 == d2 || abs(d1 - d2) <= 6)
     {
       //heading is blocks[0]
-      R_x = blocks[0].x - x_c; 
-      R_y = blocks[0].y - y_c;
+      R_x = blocks[0].x - filter_x.getAverage(); 
+      R_y = blocks[0].y - filter_y.getAverage();
       // Calculate the average distance ratio
       average_distance_ratio = calculate_average_ratio(d1, real_distance1, d2, real_distance2, d3, real_distance3);
     }
     else if (d2 == d3 || abs(d3 - d2) <= 6)
     {
       //heading is blocks[2]
-      R_x = blocks[2].x - x_c; 
-      R_y = blocks[2].y - y_c;
+      R_x = blocks[2].x - filter_x.getAverage(); 
+      R_y = blocks[2].y - filter_y.getAverage();
 
       // Calculate the average distance ratio
       average_distance_ratio = calculate_average_ratio(d3, real_distance1, d2, real_distance2, d1, real_distance3);
@@ -277,8 +330,8 @@ int main(int argc, char * argv[])
     else if (d1 == d3 || abs(d1 - d3) <= 6)
     {
       //heading is blocks[1]
-      R_x = blocks[1].x - x_c; 
-      R_y = blocks[1].y - y_c;
+      R_x = blocks[1].x - filter_x.getAverage(); 
+      R_y = blocks[1].y - filter_y.getAverage();
 
       // Calculate the average distance ratio
       average_distance_ratio = calculate_average_ratio(d1, real_distance1, d3, real_distance2, d2, real_distance3);
@@ -308,6 +361,9 @@ int main(int argc, char * argv[])
     // Sleep for the time remaining until 10 Hz is reached
     loop_rate.sleep();
 
+    // Write Data rows
+    file << x_rel_meters << "," << y_rel_meters << "," << angle_rel_deg << "\n";  
+
     // Output results
     //std::cout << "x_rel in meters: " << x_rel_meters << " m" << std::endl;
     //std::cout << "y_rel in meters: " << y_rel_meters << " m" << std::endl;
@@ -317,5 +373,6 @@ int main(int argc, char * argv[])
 
     i++;
   }
+  file.close();
   pixy_close();
 }
